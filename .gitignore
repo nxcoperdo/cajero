@@ -27,3 +27,9 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+### Node / HyperFrames ###
+node_modules/
+videos/*/node_modules/
+videos/*/.media/
+videos/*/snapshots/
+videos/*/.hyperframes-cache/
