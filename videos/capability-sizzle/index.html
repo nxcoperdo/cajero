@@ -3,277 +3,779 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=1920, height=1080" />
+    <title>Capability Sizzle — Producción en minutos</title>
+    <!-- GSAP vendored locally: the render sandbox has no outbound network, so a CDN
+         tag leaves the runtime with no gsap at all. -->
     <script src="vendor/gsap.min.js"></script>
+
     <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      html, body {
+      /* palette + type system — every colour is declared once here
+         (builder-contract § "Palette discipline"); no literal hex downstream. */
+      :root {
+        --ink: #0b0b0c; /* ground          */
+        --paper: #f2efe9; /* primary type    */
+        --accent: #ff4a1c; /* the one signal  */
+        --muted: #6e6a63; /* retired / rules */
+
+        --font-display: "League Gothic", "Oswald", sans-serif;
+        --font-mono: "IBM Plex Mono", monospace;
+
+        /* 12-column margin system: 160px margins, 104px columns, 32px gutters.
+           column i starts at 160 + i*136; column 12 ends at 1760. */
+        --margin: 160px;
+        --colstep: 136px;
+        /* compression anchor — 38% of 1920, left of centre, inside column 5 */
+        --anchor: 730px;
+      }
+
+      * {
         margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
         width: 1920px;
         height: 1080px;
         overflow: hidden;
-        background: #0b0b0c;
+        background: var(--ink);
       }
+
       body {
-        font-family: "League Gothic", "Oswald", sans-serif;
-        color: #f2efe9;
+        font-family: var(--font-display);
         -webkit-font-smoothing: antialiased;
       }
-      .mono {
-        font-family: "IBM Plex Mono", "JetBrains Mono", monospace;
-        font-variant-numeric: tabular-nums;
-      }
 
-      #stage { position: absolute; inset: 0; overflow: hidden; }
-
-      /* 12-column margin grid — flashes once at the lockup */
-      #grid { position: absolute; inset: 0; }
-      #grid .col {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        width: 1px;
-        background: #f2efe9;
-      }
-
-      /* ---- scene 1 + 2 : the measuring rule ---- */
-      #rulegroup {
-        position: absolute;
-        left: 0;
-        top: 0;
+      #root {
+        position: relative;
         width: 1920px;
         height: 1080px;
-        transform-origin: 730px 620px;
+        overflow: hidden;
+        background: var(--ink);
       }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* untimed root children get no automatic layout — they position themselves */
+      #bg,
+      #grid,
+      #hf-vignette,
+      #grain-overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      #bg {
+        background: var(--ink);
+        z-index: 0;
+      }
+
+      /* hairline column grid — flashes in for a breath on the 9.8s beat */
+      #grid {
+        z-index: 1;
+        --gline: color-mix(in srgb, var(--paper) 12%, transparent);
+        background-repeat: no-repeat;
+        background-image:
+          repeating-linear-gradient(to right, var(--gline) 0 1px, transparent 1px 136px),
+          linear-gradient(var(--gline), var(--gline)),
+          linear-gradient(var(--gline), var(--gline)),
+          linear-gradient(var(--gline), var(--gline));
+        background-position: 160px 0, 1760px 0, 160px 120px, 160px 960px;
+        background-size: 1497px 1080px, 1px 1080px, 1600px 1px, 1600px 1px;
+      }
+
+      #stage {
+        z-index: 5;
+      }
+
+      /* ─────────────────── scenes 1–2 · the measuring field ─────────────────── */
+      #field {
+        position: absolute;
+        inset: 0;
+        filter: blur(0px);
+      }
+
+      #semanas-wrap {
+        position: absolute;
+        left: var(--margin);
+        top: 395px;
+      }
+
+      #semanas {
+        display: block;
+        font-family: var(--font-display);
+        font-weight: 400; /* League Gothic ships weight 400 only */
+        font-size: 250px;
+        line-height: 0.88;
+        color: var(--paper);
+        white-space: nowrap;
+        letter-spacing: 0; /* tracking is a per-glyph transform, see below */
+      }
+      /* Tracking is a per-glyph x offset, never letter-spacing: transforms
+         interpolate sub-pixel, letter-spacing snaps to whole device pixels and
+         stutters under the seek-by-frame capture engine. */
+      #semanas .gl {
+        display: inline-block;
+      }
+
       #rule-line {
         position: absolute;
-        left: 200px;
-        top: 620px;
-        width: 1520px;
+        left: var(--margin);
+        top: 686px;
+        width: 1600px;
         height: 1px;
-        background: #7c7972;
-        transform-origin: left center;
+        background: var(--muted);
       }
-      #semanas {
-        position: absolute;
-        left: 200px;
-        top: 432px;
-        font-size: 158px;
-        line-height: 1;
-        white-space: nowrap;
-        transform-origin: left center;
-      }
-      /* tracking is animated per glyph via transforms — never letter-spacing */
-      #semanas .ch { display: inline-block; transform-origin: left center; }
 
-      .tick {
+      #ticks {
         position: absolute;
-        top: 632px;
-        font-size: 22px;
-        letter-spacing: 0.18em;
-        color: #7c7972;
-        transform-origin: center top;
+        inset: 0;
       }
-      .tick::before {
-        content: "";
+      #ticks .tick {
         position: absolute;
-        left: 0;
-        top: -12px;
+        display: block;
+        top: 674px;
         width: 1px;
-        height: 10px;
-        background: #7c7972;
+        height: 26px;
+        background: var(--muted);
+      }
+      #ticks .tlabel {
+        position: absolute;
+        display: block;
+        top: 716px;
+        font-family: var(--font-mono);
+        font-weight: 400;
+        font-size: 26px;
+        letter-spacing: 0.18em;
+        color: var(--paper);
+        white-space: nowrap;
       }
 
-      /* ---- scene 3 : the release ---- */
-      #minutos {
+      /* ────────────────────── scene 3 · the release ────────────────────── */
+      #minutos-layer {
         position: absolute;
-        left: 200px;
-        top: 398px;
-        font-size: 232px;
-        line-height: 1;
-        letter-spacing: -0.02em;
-        color: #ff4a1c;
-        white-space: nowrap;
-        transform-origin: left center;
+        inset: 0;
       }
+
+      #minutos-hero {
+        position: absolute;
+        display: block;
+        left: var(--margin);
+        top: 330px;
+        font-family: var(--font-display);
+        font-weight: 400;
+        font-size: 360px;
+        line-height: 0.88;
+        letter-spacing: -0.04em;
+        color: var(--accent);
+        white-space: nowrap;
+        text-shadow: 0px 0px 0px rgba(255, 74, 28, 0);
+      }
+
       #readout {
         position: absolute;
-        left: 200px;
-        top: 700px;
-        font-size: 26px;
-        letter-spacing: 0.24em;
-        color: #7c7972;
-      }
-      #accent-rule {
-        position: absolute;
-        left: 200px;
-        top: 668px;
-        width: 430px;
-        height: 2px;
-        background: #ff4a1c;
-        transform-origin: left center;
+        display: block;
+        right: var(--margin);
+        top: 540px;
+        font-family: var(--font-mono);
+        font-weight: 400;
+        font-size: 52px;
+        letter-spacing: 0.06em;
+        color: var(--paper);
+        white-space: nowrap;
       }
 
-      /* ---- scene 4 + 5 : the statement ---- */
-      #statement {
+      #tickrule2 {
         position: absolute;
-        left: 200px;
-        top: 404px;
-        font-size: 104px;
-        line-height: 1.08;
-        letter-spacing: 0.005em;
+        left: var(--margin);
+        top: 700px;
+        width: 420px;
+        height: 28px;
       }
-      #statement .line { display: block; white-space: nowrap; }
-      #statement .w { display: inline-block; }
-      #w-minutos { position: relative; color: #ff4a1c; }
-      #w-semanas { position: relative; color: #7c7972; }
+      #tickrule2-line {
+        position: absolute;
+        display: block;
+        left: 0;
+        top: 0;
+        width: 420px;
+        height: 1px;
+        background: var(--accent);
+      }
+      #tickrule2 .tick2 {
+        position: absolute;
+        display: block;
+        top: 0;
+        width: 1px;
+        height: 18px;
+        background: var(--accent);
+      }
+
+      /* ───────────────── scenes 4–5 · the statement + lockup ───────────────── */
+      #stmt {
+        position: absolute;
+        left: var(--margin);
+        top: 600px;
+        width: 1600px;
+        font-family: var(--font-display);
+        font-weight: 400;
+        font-size: 170px;
+        line-height: 0.88;
+        letter-spacing: -0.04em;
+        text-transform: uppercase;
+        color: var(--paper);
+      }
+      #stmt .line {
+        display: block;
+        white-space: nowrap;
+      }
+      #stmt .w {
+        display: inline-block; /* transforms are a no-op on inline spans */
+      }
+      #stmt .w-accent {
+        position: relative;
+        color: var(--accent);
+      }
+      #stmt .w-muted {
+        position: relative;
+        color: var(--muted);
+      }
+      #w-minutos-i {
+        display: inline-block;
+      }
+
+      /* the accent rule that retires "semanas", and the lockup underline */
+      #strike,
       #underline {
         position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 6px;
-        height: 4px;
-        background: #ff4a1c;
-        transform-origin: left center;
+        display: block;
+        background: var(--accent);
       }
       #strike {
+        left: 0;
+        top: calc(50% - 0.125em);
+        width: 100%;
+        height: 4px;
+      }
+      #underline {
+        left: 0;
+        top: 100%;
+        margin-top: 8px;
+        width: 100%;
+        height: 5px;
+      }
+
+      /* catalog component `vignette` (npx hyperframes add vignette) — intensity
+         dialled back to the low-intensity filmic ground the shot plan asks for. */
+      #hf-vignette {
+        z-index: 90;
+        --vignette-size: 52%;
+        --vignette-color: rgba(0, 0, 0, 0.55);
+        background: radial-gradient(
+          var(--vignette-shape, ellipse) at center,
+          transparent var(--vignette-size, 45%),
+          var(--vignette-color, rgba(0, 0, 0, 0.7)) var(--vignette-edge, 100%)
+        );
+      }
+
+      /* catalog component `grain-overlay` (npx hyperframes add grain-overlay).
+         EDIT: its `animation: hf-grain-noise .5s steps(1) infinite` is removed —
+         an infinite CSS animation is non-deterministic under seek and unbounded
+         for duration inference. Texture kept, static and low. */
+      #grain-overlay {
+        z-index: 100;
+      }
+      #grain-overlay .grain-texture {
         position: absolute;
-        left: -4px;
-        right: -4px;
-        top: 56%;
-        height: 3px;
-        background: #ff4a1c;
-        transform-origin: left center;
+        inset: 0;
+        background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        opacity: 0.06;
       }
     </style>
   </head>
+
   <body>
     <div
       id="root"
       data-composition-id="main"
       data-start="0"
       data-duration="12"
+      data-fps="30"
       data-width="1920"
       data-height="1080"
     >
-      <div id="stage" class="clip" data-start="0" data-duration="12" data-track-index="1">
-        <div id="grid">
-          <div class="col" style="left: 200px"></div>
-          <div class="col" style="left: 393px"></div>
-          <div class="col" style="left: 586px"></div>
-          <div class="col" style="left: 779px"></div>
-          <div class="col" style="left: 972px"></div>
-          <div class="col" style="left: 1165px"></div>
-          <div class="col" style="left: 1358px"></div>
-          <div class="col" style="left: 1551px"></div>
-          <div class="col" style="left: 1720px"></div>
+      <div id="bg"></div>
+
+      <!-- 12-column margin system, hidden until the 9.8s lockup beat -->
+      <div id="grid" aria-hidden="true"></div>
+
+      <!-- One full-duration clip. The five scenes of shot-plan.json partition
+           [0,12] inside it as timeline-driven groups — the kinetic-type module's
+           hand-author shape ("one full-duration .clip; a .group per scene"), which
+           is what lets SEMANAS collapse into MINUTOS and MINUTOS demote into the
+           statement without a clip boundary cutting the handoff. -->
+      <section id="stage" class="clip" data-start="0" data-duration="12" data-track-index="0">
+        <!-- ── scenes 1+2 · rule [0 → 2.4) · compress [2.4 → 4.5) ── -->
+        <div id="field" data-scene="rule,compress" data-scene-start="0" data-scene-end="4.5">
+          <div id="semanas-wrap">
+            <span id="semanas"><span class="gl" data-layout-allow-overlap="true">S</span><span class="gl" data-layout-allow-overlap="true">E</span><span class="gl" data-layout-allow-overlap="true">M</span><span class="gl" data-layout-allow-overlap="true">A</span><span class="gl" data-layout-allow-overlap="true">N</span><span class="gl" data-layout-allow-overlap="true">A</span><span class="gl" data-layout-allow-overlap="true">S</span></span>
+          </div>
+
+          <i id="rule-line"></i>
+
+          <div id="ticks">
+            <i class="tick" data-x="160" style="left: 160px"></i>
+            <i class="tick" data-x="560" style="left: 560px"></i>
+            <i class="tick" data-x="960" style="left: 960px"></i>
+            <i class="tick" data-x="1360" style="left: 1360px"></i>
+            <i class="tick" data-x="1760" style="left: 1760px"></i>
+
+            <span class="tlabel" data-x="160" style="left: 174px">S1</span>
+            <span class="tlabel" data-x="560" style="left: 574px">S2</span>
+            <span class="tlabel" data-x="960" style="left: 974px">S3</span>
+            <span class="tlabel" data-x="1360" style="left: 1374px">S4</span>
+          </div>
         </div>
 
-        <div id="rulegroup">
-          <div id="rule-line"></div>
-          <div id="semanas"><span class="ch">S</span><span class="ch">E</span><span class="ch">M</span><span class="ch">A</span><span class="ch">N</span><span class="ch">A</span><span class="ch">S</span></div>
-          <div class="tick mono" style="left: 200px">S1</div>
-          <div class="tick mono" style="left: 580px">S2</div>
-          <div class="tick mono" style="left: 960px">S3</div>
-          <div class="tick mono" style="left: 1340px">S4</div>
+        <!-- ── scene 3 · minutos [4.5 → 7.2) ── -->
+        <div
+          id="minutos-layer"
+          data-scene="minutos"
+          data-scene-start="4.5"
+          data-scene-end="7.2"
+        >
+          <span id="minutos-hero" data-layout-allow-overlap="true">MINUTOS</span>
+          <span id="readout">00:12</span>
+          <div id="tickrule2">
+            <i id="tickrule2-line"></i>
+            <i class="tick2" style="left: 0px"></i>
+            <i class="tick2" style="left: 70px"></i>
+            <i class="tick2" style="left: 140px"></i>
+            <i class="tick2" style="left: 210px"></i>
+            <i class="tick2" style="left: 280px"></i>
+            <i class="tick2" style="left: 350px"></i>
+            <i class="tick2" style="left: 419px"></i>
+          </div>
         </div>
 
-        <div id="minutos">MINUTOS</div>
-        <div id="accent-rule"></div>
-        <div id="readout" class="mono">00:12</div>
-
-        <div id="statement">
-          <span class="line">Producción de video</span>
-          <span class="line"
-            >en <span class="w" id="w-minutos">minutos<i id="underline"></i></span
-            >, no en <span class="w" id="w-semanas">semanas<i id="strike"></i></span></span
-          >
+        <!-- ── scenes 4+5 · statement [7.2 → 9.8) · lockup [9.8 → 12) ──
+             Copy is content.customize.copy_final, exactly:
+             "Producción de video en minutos, no en semanas" -->
+        <div id="stmt" data-scene="statement,lockup" data-scene-start="7.2" data-scene-end="12">
+          <span class="line"><span class="w w-anim" data-layout-allow-overlap="true">Producción</span> <span class="w w-anim" data-layout-allow-overlap="true">de</span> <span class="w w-anim" data-layout-allow-overlap="true">video</span></span>
+          <span class="line"><span class="w w-anim" data-layout-allow-overlap="true">en</span> <span class="w w-accent" id="w-minutos" data-layout-allow-overlap="true"><span id="w-minutos-i" data-layout-allow-overlap="true">minutos</span><i id="underline"></i></span><span class="w w-anim" data-layout-allow-overlap="true">,</span> <span class="w w-anim" data-layout-allow-overlap="true">no</span> <span class="w w-anim" data-layout-allow-overlap="true">en</span> <span class="w w-muted w-anim" id="w-semanas" data-layout-allow-overlap="true">semanas<i id="strike"></i></span></span>
         </div>
-      </div>
+      </section>
+
+      <!-- catalog components: vignette (z 90) then grain (z 100) -->
+      <div id="hf-vignette"></div>
+      <div id="grain-overlay"><div class="grain-texture"></div></div>
     </div>
 
     <script>
-      window.__timelines = window.__timelines || {};
+      /* ════════════════════════════════════════════════════════════════════════
+         capability-sizzle · 12.000s @ 30fps · 1920×1080 · hard cut, no trailing fade
 
-      const chars = gsap.utils.toArray("#semanas .ch");
-      const ticks = gsap.utils.toArray(".tick");
-      const lines = gsap.utils.toArray("#statement .line");
+         ONE paused GSAP timeline. No clocks, no randomness, no network, no
+         autoplay, finite repeats only. Every delayed element is opacity-gated by
+         an explicit fromTo() start; every tween that is not an element's first
+         carries immediateRender:false so a seek never inherits a stale start.
 
-      // Tracking is a per-glyph x offset, not letter-spacing: transforms
-      // interpolate sub-pixel, letter-spacing snaps to device pixels and
-      // stutters under the seek-by-frame capture engine.
-      const TRACK_OPEN = 44; // 0.28em at 158px
-      const TRACK_TIGHT = -6.3; // -0.04em at 158px
+         Scene partition of [0,12] (shot-plan.json, no gaps / no overlaps):
+           s1 rule      0.00 → 2.40
+           s2 compress  2.40 → 4.50
+           s3 minutos   4.50 → 7.20
+           s4 statement 7.20 → 9.80
+           s5 lockup    9.80 → 12.00
+         Beats: 0.3 · 2.4 · 4.5 · 4.9 · 7.2 · 9.8 · 11.4 (all frame-aligned at 30fps)
+         ════════════════════════════════════════════════════════════════════════ */
+      (function () {
+        "use strict";
 
-      // --- initial state: immediate, outside the timeline, so frame 0 is exact ---
-      gsap.set("#rule-line", { scaleX: 0 });
-      gsap.set("#semanas", { y: 44, opacity: 0 });
-      gsap.set(chars, { x: (i) => i * TRACK_OPEN });
-      gsap.set("#rulegroup", { scaleX: 1, opacity: 1, filter: "blur(0px)" });
-      gsap.set(ticks, { y: 14, opacity: 0 });
-      gsap.set("#minutos", { opacity: 0, scale: 0.62 });
-      gsap.set("#readout", { opacity: 0, x: -18 });
-      gsap.set("#accent-rule", { scaleX: 0 });
-      gsap.set("#statement", { opacity: 0 });
-      gsap.set(lines, { y: 26, opacity: 0 });
-      gsap.set("#grid", { opacity: 0 });
-      gsap.set("#underline", { scaleX: 0 });
-      gsap.set("#strike", { scaleX: 0 });
+        var ANCHOR = 730; // compression point, 38% of frame width
+        var HERO_ORIGIN = "570px 210px"; // the anchor (730, 540) expressed inside #minutos-hero
 
-      const tl = gsap.timeline({ paused: true });
+        // Per-glyph tracking, in px at the 250px display size of SEMANAS.
+        var TRACK_WIDE = 0.42 * 250; // 105  — entrance
+        var TRACK_OPEN = 0.28 * 250; // 70   — the old unit, drawn to scale
+        var TRACK_CRUSH = -0.04 * 250; // -10 — fully compressed
 
-      // --- scene 1 : rule (0 – 2.4) the status quo, drawn to scale ---
-      tl.to("#rule-line", { scaleX: 1, duration: 0.35, ease: "power4.out" }, 0.0)
-        .to("#semanas", { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" }, 0.15)
-        .to(ticks, { y: 0, opacity: 1, duration: 0.3, stagger: 0.07, ease: "power2.out" }, 0.35)
-        .to("#rulegroup", { scale: 1.006, duration: 1.5, ease: "sine.inOut" }, 0.9);
+        var S1 = 0,
+          S2 = 2.4,
+          S3 = 4.5,
+          S4 = 7.2,
+          S5 = 9.8;
 
-      // --- scene 2 : compress (2.4 – 4.5) the one pattern interrupt ---
-      tl.to(chars, { x: (i) => i * TRACK_TIGHT, duration: 0.78, ease: "expo.in" }, 2.4)
-        .to(ticks, {
-          x: (i) => [530, 150, -230, -610][i],
-          opacity: 0,
-          duration: 0.62,
-          stagger: { each: 0.05, from: "edges" },
-          ease: "expo.in",
-        }, 2.4)
-        .to("#rulegroup", { scaleX: 0.55, duration: 0.78, ease: "expo.in" }, 2.4)
-        .to("#rulegroup", { filter: "blur(6px)", duration: 0.4, ease: "power2.in" }, 2.72)
-        .to("#rulegroup", { filter: "blur(0px)", duration: 0.28, ease: "power2.out" }, 3.2)
-        // the collapse IS the exit — the text never fades on its own
-        .to("#rulegroup", { scaleX: 0.04, opacity: 0, duration: 0.42, ease: "expo.in" }, 4.05);
+        function $(sel) {
+          return document.querySelector(sel);
+        }
 
-      // --- scene 3 : minutos (4.5 – 7.2) release and impact ---
-      tl.to("#minutos", { opacity: 1, scale: 1, duration: 0.34, ease: "back.out(2.2)" }, 4.5)
-        .to("#minutos", { x: 3, duration: 0.05, ease: "none", yoyo: true, repeat: 1 }, 4.84)
-        .to("#accent-rule", { scaleX: 1, duration: 0.32, ease: "power4.out" }, 4.78)
-        .to("#readout", { opacity: 1, x: 0, duration: 0.22, ease: "power3.out" }, 4.9)
-        .to("#minutos", {
-          filter: "drop-shadow(0 0 26px rgba(255,74,28,0.55))",
-          duration: 0.3,
-          ease: "power2.out",
-        }, 4.9)
-        .to("#minutos", {
-          filter: "drop-shadow(0 0 0px rgba(255,74,28,0))",
-          duration: 0.7,
-          ease: "power2.inOut",
-        }, 5.4);
+        /* Layout constants are measured ONCE here, before a single tween exists,
+           and never re-read at tween time (hyperframes-animation § Critical
+           Constraints). offset* is used rather than getBoundingClientRect so the
+           numbers are layout pixels and immune to any preview scaling. */
+        function offsetIn(el, ancestor) {
+          var x = 0,
+            y = 0,
+            node = el;
+          while (node && node !== ancestor) {
+            x += node.offsetLeft;
+            y += node.offsetTop;
+            node = node.offsetParent;
+          }
+          return { x: x, y: y, w: el.offsetWidth, h: el.offsetHeight };
+        }
 
-      // --- scene 4 : statement (7.2 – 9.8) MINUTOS demotes into the line ---
-      tl.to("#minutos", { scale: 0.448, x: 24, y: 132, duration: 0.52, ease: "power3.inOut" }, 7.2)
-        .to("#accent-rule", { scaleX: 0, duration: 0.3, ease: "power3.in" }, 7.2)
-        .to("#readout", { opacity: 0, duration: 0.24, ease: "power2.in" }, 7.2)
-        .to("#minutos", { opacity: 0, duration: 0.18, ease: "none" }, 7.66)
-        .to("#statement", { opacity: 1, duration: 0.01, ease: "none" }, 7.66)
-        .to(lines, { y: 0, opacity: 1, duration: 0.46, stagger: 0.12, ease: "power3.out" }, 7.66);
+        function build() {
+          var stage = $("#stage");
+          var hero = $("#minutos-hero");
+          var slot = $("#w-minutos-i");
 
-      // --- scene 5 : lockup (9.8 – 12) retire the old unit, hold, hard cut ---
-      tl.to("#strike", { scaleX: 1, duration: 0.3, ease: "power2.out" }, 9.8)
-        .to("#grid", { opacity: 0.12, duration: 0.18, ease: "power2.out" }, 10.15)
-        .to("#grid", { opacity: 0, duration: 0.34, ease: "power2.inOut" }, 10.55)
-        .to("#underline", { scaleX: 1, duration: 0.34, ease: "power4.out" }, 11.4);
+          // FLIP handoff constants: map the statement's "minutos" slot onto the
+          // hero word so scene 4 starts exactly where scene 3 ended.
+          var heroBox = offsetIn(hero, stage);
+          var slotBox = offsetIn(slot, stage);
+          var flipScale = slotBox.w > 0 ? heroBox.w / slotBox.w : 360 / 140;
+          var flipX = heroBox.x - slotBox.x;
+          var flipY = heroBox.y + heroBox.h / 2 - (slotBox.y + slotBox.h / 2);
 
-      tl.seek(0);
-      window.__timelines["main"] = tl;
+          var tl = gsap.timeline({ paused: true });
+          tl.addLabel("s1-rule", S1)
+            .addLabel("s2-compress", S2)
+            .addLabel("s3-minutos", S3)
+            .addLabel("s4-statement", S4)
+            .addLabel("s5-lockup", S5);
+
+          /* ── s1 · rule [0 → 2.4) ────────────────────────────────────────────
+             bar_wipe on the rule, slide_bottom + open tracking on SEMANAS, mono
+             tick labels staggering in beneath, then near-stillness. */
+          // the frame opens already moving: frame 0 carries a stub of rule
+          tl.fromTo(
+            "#rule-line",
+            { scaleX: 0.06, transformOrigin: "left center" },
+            { scaleX: 1, duration: 0.35, ease: "power4.out" },
+            0,
+          );
+
+          tl.fromTo(
+            "#semanas-wrap",
+            { autoAlpha: 0, y: 96 },
+            { autoAlpha: 1, y: 0, duration: 0.62, ease: "power4.out" },
+            0.08,
+          );
+
+          // the type sets across the rule at the authored open tracking (0.28em),
+          // arriving from a touch wider (0.42em) — one x offset per glyph.
+          tl.fromTo(
+            "#semanas .gl",
+            { x: function (i) { return i * TRACK_WIDE; } },
+            {
+              x: function (i) { return i * TRACK_OPEN; },
+              duration: 0.66,
+              ease: "power3.out",
+            },
+            0.08,
+          );
+
+          tl.fromTo(
+            "#ticks .tick",
+            { scaleY: 0, transformOrigin: "top center" },
+            {
+              scaleY: 1,
+              duration: 0.3,
+              ease: "power3.out",
+              stagger: { each: 0.06, from: "start" },
+            },
+            0.26,
+          );
+
+          tl.fromTo(
+            "#ticks .tlabel",
+            { autoAlpha: 0, y: 14 },
+            {
+              autoAlpha: 0.62,
+              y: 0,
+              duration: 0.36,
+              ease: "power3.out",
+              stagger: { each: 0.07, from: "start" },
+            },
+            0.3,
+          );
+
+          // hold_breath — the only motion left in s1, so the compression has
+          // something to break.
+          tl.to(
+            "#semanas-wrap",
+            { scale: 1.012, duration: 0.6, yoyo: true, repeat: 1, ease: "sine.inOut" },
+            1.2,
+          );
+
+          /* ── s2 · compress [2.4 → 4.5) ──────────────────────────────────────
+             The single pattern interrupt. Ticks rush inward from the edges, the
+             tracking crushes 0.28em → -0.04em, and the whole field scales toward
+             the anchor. The collapse IS the exit — no text fades out. */
+          tl.fromTo(
+            "#ticks .tick",
+            { x: 0 },
+            {
+              x: function (i, t) {
+                return (ANCHOR - parseFloat(t.dataset.x)) * 0.38;
+              },
+              duration: 0.72,
+              ease: "expo.in",
+              stagger: { each: 0.07, from: "edges" },
+              immediateRender: false,
+            },
+            S2,
+          );
+
+          // mono labels drop out one by one as they collide
+          tl.fromTo(
+            "#ticks .tlabel",
+            { autoAlpha: 0.62, x: 0 },
+            {
+              autoAlpha: 0,
+              x: function (i, t) {
+                return (ANCHOR - parseFloat(t.dataset.x)) * 0.38;
+              },
+              duration: 0.42,
+              ease: "power2.in",
+              stagger: { each: 0.08, from: "edges" },
+              immediateRender: false,
+            },
+            S2 + 0.02,
+          );
+
+          // the tracking crush — 0.28em → -0.04em. Technique borrowed from the
+          // catalog's variable-axis-type: one numeric handle, tweened
+          // deterministically on the paused timeline. League Gothic is a static
+          // face with no variable axis, so the handle is the per-glyph offset.
+          tl.fromTo(
+            "#semanas .gl",
+            { x: function (i) { return i * TRACK_OPEN; } },
+            {
+              x: function (i) { return i * TRACK_CRUSH; },
+              duration: 1.05,
+              ease: "power3.inOut",
+              immediateRender: false,
+            },
+            S2 + 0.05,
+          );
+
+          // the horizontal field collapses toward the anchor, with a short shear
+          tl.fromTo(
+            "#field",
+            { scaleX: 1, skewX: 0, transformOrigin: ANCHOR + "px 540px" },
+            { scaleX: 0.045, skewX: -5, duration: 1.45, ease: "power3.inOut" },
+            S2 + 0.05,
+          );
+
+          // motion-blur feel that resolves before the mark lands
+          tl.fromTo(
+            "#field",
+            { filter: "blur(0px)" },
+            { filter: "blur(7px)", duration: 0.65, ease: "power2.in", immediateRender: false },
+            S2 + 0.05,
+          );
+          tl.fromTo(
+            "#field",
+            { filter: "blur(7px)" },
+            { filter: "blur(0px)", duration: 0.8, ease: "power2.out", immediateRender: false },
+            S2 + 0.7,
+          );
+
+          // the dense mark hands over to MINUTOS on the 4.5 beat
+          tl.fromTo(
+            "#field",
+            { autoAlpha: 1 },
+            { autoAlpha: 0, duration: 0.14, ease: "power2.in", immediateRender: false },
+            S3 - 0.1,
+          );
+
+          /* ── s3 · minutos [4.5 → 7.2) ───────────────────────────────────────
+             scale_punch out of the compressed mark, 1px shake on landing, mono
+             readout snaps in, accent tick-rule redraws at the new tight spacing,
+             glow on the 4.9 beat, then hold. */
+          tl.fromTo(
+            "#minutos-hero",
+            { autoAlpha: 0, scale: 0.62, transformOrigin: HERO_ORIGIN },
+            { autoAlpha: 1, scale: 1, duration: 0.34, ease: "back.out(2.2)" },
+            S3,
+          );
+
+          tl.to(
+            "#minutos-hero",
+            {
+              keyframes: { x: [0, -4, 4, -2, 0], ease: "none" },
+              duration: 0.2,
+            },
+            S3 + 0.34,
+          );
+
+          tl.fromTo(
+            "#readout",
+            { autoAlpha: 0, x: 26 },
+            { autoAlpha: 1, x: 0, duration: 0.2, ease: "power4.out" },
+            S3 + 0.12,
+          );
+
+          tl.fromTo(
+            "#tickrule2-line",
+            { scaleX: 0, transformOrigin: "left center" },
+            { scaleX: 1, duration: 0.42, ease: "power3.out" },
+            S3 + 0.16,
+          );
+
+          tl.fromTo(
+            "#tickrule2 .tick2",
+            { scaleY: 0, transformOrigin: "top center" },
+            {
+              scaleY: 1,
+              duration: 0.24,
+              ease: "power3.out",
+              stagger: { each: 0.035, from: "start" },
+            },
+            S3 + 0.26,
+          );
+
+          // glow — the accent used as a signal, on the 4.9 beat
+          tl.fromTo(
+            "#minutos-hero",
+            { textShadow: "0px 0px 0px rgba(255, 74, 28, 0)" },
+            {
+              textShadow: "0px 0px 46px rgba(255, 74, 28, 0.85)",
+              duration: 0.26,
+              yoyo: true,
+              repeat: 1,
+              ease: "sine.inOut",
+              immediateRender: false,
+            },
+            4.9,
+          );
+
+          /* ── s4 · statement [7.2 → 9.8) ─────────────────────────────────────
+             MINUTOS demotes into line 2 (FLIP-style handoff on pre-measured
+             constants, not a cut) while the rest of the line word_reveals. */
+          tl.fromTo(
+            "#minutos-hero",
+            { autoAlpha: 1 },
+            { autoAlpha: 0, duration: 0.12, ease: "power2.in", immediateRender: false },
+            S4,
+          );
+          tl.fromTo(
+            "#readout",
+            { autoAlpha: 1 },
+            { autoAlpha: 0, duration: 0.18, ease: "power2.in", immediateRender: false },
+            S4 - 0.06,
+          );
+          tl.fromTo(
+            "#tickrule2",
+            { autoAlpha: 1 },
+            { autoAlpha: 0, duration: 0.18, ease: "power2.in", immediateRender: false },
+            S4 - 0.06,
+          );
+
+          tl.fromTo(
+            "#w-minutos",
+            { autoAlpha: 0 },
+            { autoAlpha: 1, duration: 0.12, ease: "none" },
+            S4,
+          );
+          tl.fromTo(
+            "#w-minutos-i",
+            { x: flipX, y: flipY, scale: flipScale, transformOrigin: "left center" },
+            { x: 0, y: 0, scale: 1, duration: 0.78, ease: "power3.inOut" },
+            S4,
+          );
+
+          tl.fromTo(
+            "#stmt .w-anim",
+            { autoAlpha: 0, y: 30 },
+            {
+              autoAlpha: 1,
+              y: 0,
+              duration: 0.5,
+              ease: "power3.out",
+              stagger: 0.06,
+            },
+            S4 + 0.06,
+          );
+
+          /* ── s5 · lockup [9.8 → 12) ─────────────────────────────────────────
+             The accent rule retires "semanas" on screen, the grid it was always
+             sitting on flashes visible for a breath, the underline sweeps under
+             "minutos" on 11.4, and the frame holds. Hard cut at 12.000s. */
+          tl.fromTo(
+            "#strike",
+            { scaleX: 0, transformOrigin: "left center" },
+            { scaleX: 1, duration: 0.3, ease: "power2.out" },
+            S5,
+          );
+
+          tl.fromTo(
+            "#grid",
+            { autoAlpha: 0 },
+            { autoAlpha: 1, duration: 0.18, ease: "power2.out" },
+            S5 + 0.06,
+          );
+          tl.fromTo(
+            "#grid",
+            { autoAlpha: 1 },
+            { autoAlpha: 0, duration: 0.52, ease: "power2.inOut", immediateRender: false },
+            S5 + 0.5,
+          );
+
+          tl.to(
+            "#stmt",
+            {
+              scale: 1.008,
+              transformOrigin: "left center",
+              duration: 0.9,
+              yoyo: true,
+              repeat: 1,
+              ease: "sine.inOut",
+            },
+            10.1,
+          );
+
+          tl.fromTo(
+            "#underline",
+            { scaleX: 0, transformOrigin: "left center" },
+            { scaleX: 1, duration: 0.34, ease: "power3.out" },
+            11.4,
+          );
+
+          tl.seek(0);
+
+          window.__timelines = window.__timelines || {};
+          window.__timelines["main"] = tl;
+          if (typeof window.__hfForceTimelineRebind === "function") {
+            window.__hfForceTimelineRebind();
+          }
+        }
+
+        /* Fonts must be resolved before the FLIP constants are measured, otherwise
+           fallback metrics leak into the handoff. Registration happens at the END
+           of the callback (core: gsap_timeline_registered_before_async_build). */
+        if (document.fonts && document.fonts.load) {
+          Promise.all([
+            document.fonts.load('400 360px "League Gothic"', "MINUTOSemanad"),
+            document.fonts.load('400 140px "League Gothic"', "PRODUCCIÓNDEVIDO,"),
+            document.fonts.load('400 52px "IBM Plex Mono"', "00:12S1234"),
+          ])
+            .then(function () {
+              return document.fonts.ready;
+            })
+            .then(build)
+            .catch(build);
+        } else {
+          build();
+        }
+      })();
     </script>
   </body>
 </html>
