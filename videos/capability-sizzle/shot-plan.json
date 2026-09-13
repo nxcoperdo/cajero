@@ -2,12 +2,29 @@
   "category": "kinetic-type",
   "duration_s": 12,
   "fps": 30,
-  "canvas": { "w": 1920, "h": 1080, "aspect": "16:9" },
+  "canvas": {
+    "w": 1920,
+    "h": 1080,
+    "aspect": "16:9"
+  },
   "style": "Editorial broadcast, not template. Near-black ink ground with a hairline measuring-rule system: condensed display type (League Gothic, tracking -0.04em) carries the statement, IBM Plex Mono at small sizes carries the technical marks (tick labels, timecode, rule numerals). One accent only, used as a signal — never as decoration. Deliberate, engineered, confident; asymmetric lockup on a visible 12-column margin system rather than dead-centered slides. Grain/vignette optional at low intensity for a filmic ground. Spanish copy, no narration, no logos, no stock imagery.",
-  "palette": ["#0B0B0C", "#F2EFE9", "#FF4A1C", "#6E6A63"],
+  "palette": [
+    "#0B0B0C",
+    "#F2EFE9",
+    "#FF4A1C",
+    "#6E6A63"
+  ],
   "font": "League Gothic",
   "font_secondary": "IBM Plex Mono",
-  "beats": [0.3, 2.4, 4.5, 4.9, 7.2, 9.8, 11.4],
+  "beats": [
+    0.3,
+    2.4,
+    4.5,
+    4.9,
+    7.2,
+    9.8,
+    11.4
+  ],
   "export": "mp4",
   "asset_needs": [],
   "shot_brief": "Twelve seconds in which time itself is the animation. The frame opens already moving: a hairline measuring rule stretches the full width, its mono tick labels (S1 S2 S3 S4) spaced wide apart, and the word SEMANAS sets across them in condensed display type with the letterspacing blown open — the old timeline, drawn to scale. At 2.4s the single pattern-interrupt fires: the rule compresses. Ticks rush inward, the tracking on SEMANAS crushes to zero, the whole horizontal field collapses toward a point left of center, and out of that compression MINUTOS lands in the accent color on the 4.5s beat with a sharp scale settle and a mono readout snapping to 00:12. The compression is the single dominant motion idea; everything else serves it. The statement then sets in two lines — 'Producción de video / en minutos, no en semanas' — where 'minutos' is already accent-colored and 'semanas' gets a thin accent rule swept through it at 9.8s, retiring the old unit on screen rather than saying so. The last beat is a lockup, not a fade: the line snaps to its margin position, the hairline grid it was always sitting on flashes visible for a breath, an underline sweeps left-to-right beneath 'minutos', and the piece holds still and confident to the cut. The viewer is never asked to read a pitch — they watch a schedule get compressed, and the craft of the compression is the proof.",
@@ -18,10 +35,15 @@
         "start": 0,
         "end": 2.4,
         "text": "SEMANAS",
-        "emphasis_words": ["SEMANAS"],
+        "emphasis_words": [
+          "SEMANAS"
+        ],
         "emotion": "measured, institutional, slightly heavy — the status quo",
         "motion": "Hook lands by 0.3s: hairline rule draws on left-to-right fast (bar_wipe, 0.35s, power4.out) while SEMANAS enters with slide_bottom + open tracking (0.28em) and mono tick labels S1·S2·S3·S4 stagger in beneath it. Then near-stillness — a slow hold_breath only — so the compression has something to break.",
-        "beats": [0.3, 1.2]
+        "beats": [
+          0.3,
+          1.2
+        ]
       },
       {
         "id": "compress",
@@ -31,38 +53,73 @@
         "emphasis_words": [],
         "emotion": "sudden mechanical compression — the pattern interrupt",
         "motion": "The one thing that changes: the rule's ticks rush inward (stagger from the outside in, expo.in) and SEMANAS' letter-spacing crushes 0.28em → -0.04em while the whole group scales x toward a point at 38% width; slight motion-blur feel via a short x-shear and 6px blur that resolves; mono tick labels drop out one by one as they collide. Ends compressed to a single dense mark — no text exit, the collapse IS the exit.",
-        "beats": [2.4, 4.4]
+        "beats": [
+          2.4,
+          4.4
+        ]
       },
       {
         "id": "minutos",
         "start": 4.5,
         "end": 7.2,
         "text": "MINUTOS",
-        "emphasis_words": ["MINUTOS"],
+        "emphasis_words": [
+          "MINUTOS"
+        ],
         "emotion": "release, impact, certainty",
         "motion": "Out of the compressed mark MINUTOS scale_punches into the accent color on the 4.5s beat (back.out(2.2), 0.34s) with a 1px shake on landing; a mono readout 00:12 snaps in at the baseline right and a short accent tick-rule redraws at the new, tight spacing beneath it. glow on the accent at 4.9s, then hold — the word stays fully readable for ~2s.",
-        "beats": [4.5, 4.9]
+        "beats": [
+          4.5,
+          4.9
+        ]
       },
       {
         "id": "statement",
         "start": 7.2,
         "end": 9.8,
         "text": "Producción de video en minutos, no en semanas",
-        "emphasis_words": ["minutos", "semanas"],
+        "emphasis_words": [
+          "minutos",
+          "semanas"
+        ],
         "emotion": "plain, confident, closing the argument",
         "motion": "MINUTOS demotes: scales down and slots into line 2 of the full statement (FLIP-style handoff, not a cut) while the rest of the line word_reveals around it (stagger 0.06s, power3.out) as two ragged-left lines on the margin grid. 'minutos' carries the accent from the previous scene; 'semanas' sets in muted #6E6A63.",
-        "beats": [7.2, 8.6]
+        "beats": [
+          7.2,
+          8.6
+        ]
       },
       {
         "id": "lockup",
         "start": 9.8,
         "end": 12,
         "text": "Producción de video en minutos, no en semanas",
-        "emphasis_words": ["minutos"],
+        "emphasis_words": [
+          "minutos"
+        ],
         "emotion": "resolved, engineered, still",
         "motion": "A thin accent rule sweeps through 'semanas' at 9.8s (transformOrigin left, 0.3s, power2.out) retiring the word; the hairline column grid flashes in at 12% opacity for ~0.4s and settles out; underline_sweep runs beneath 'minutos' at 11.4s. Final ~0.6s is a held frame with only a hold_breath — hard cut at 12s, no fade.",
-        "beats": [9.8, 11.4]
+        "beats": [
+          9.8,
+          11.4
+        ]
       }
-    ]
+    ],
+    "block": "hand-authored",
+    "block_rationale": "Catalog searched (npx hyperframes catalog --query \"kinetic type caption\" / \"compress\"). Closest candidates: variable-axis-type (width-axis morph = the tracking crush), kinetic-type-swap (held line with one rolling slot), kinetic-center-build. None carry the measuring-rule + tick-collapse system the shot depends on, and customizing one into it would cost more than authoring it. Decision: hand-author the rule/compression system with GSAP; borrow variable-axis-type technique for the tracking crush in the compress scene.",
+    "customize": {
+      "copy_final": "Producción de video en minutos, no en semanas",
+      "accent_word": "minutos",
+      "retired_word": "semanas",
+      "tick_labels": [
+        "S1",
+        "S2",
+        "S3",
+        "S4"
+      ],
+      "readout": "00:12",
+      "grid_columns": 12,
+      "hard_cut": true
+    }
   }
 }
