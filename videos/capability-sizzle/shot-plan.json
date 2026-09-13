@@ -2,124 +2,492 @@
   "category": "kinetic-type",
   "duration_s": 12,
   "fps": 30,
-  "canvas": {
-    "w": 1920,
-    "h": 1080,
-    "aspect": "16:9"
-  },
+  "canvas": { "w": 1920, "h": 1080, "aspect": "16:9" },
   "style": "Editorial broadcast, not template. Near-black ink ground with a hairline measuring-rule system: condensed display type (League Gothic, tracking -0.04em) carries the statement, IBM Plex Mono at small sizes carries the technical marks (tick labels, timecode, rule numerals). One accent only, used as a signal — never as decoration. Deliberate, engineered, confident; asymmetric lockup on a visible 12-column margin system rather than dead-centered slides. Grain/vignette optional at low intensity for a filmic ground. Spanish copy, no narration, no logos, no stock imagery.",
-  "palette": [
-    "#0B0B0C",
-    "#F2EFE9",
-    "#FF4A1C",
-    "#6E6A63"
-  ],
+  "palette": ["#0B0B0C", "#F2EFE9", "#FF4A1C", "#6E6A63"],
   "font": "League Gothic",
   "font_secondary": "IBM Plex Mono",
-  "beats": [
-    0.3,
-    2.4,
-    4.5,
-    4.9,
-    7.2,
-    9.8,
-    11.4
-  ],
+  "beats": [0.3, 2.4, 4.5, 4.9, 7.2, 9.8, 11.4],
   "export": "mp4",
   "asset_needs": [],
   "shot_brief": "Twelve seconds in which time itself is the animation. The frame opens already moving: a hairline measuring rule stretches the full width, its mono tick labels (S1 S2 S3 S4) spaced wide apart, and the word SEMANAS sets across them in condensed display type with the letterspacing blown open — the old timeline, drawn to scale. At 2.4s the single pattern-interrupt fires: the rule compresses. Ticks rush inward, the tracking on SEMANAS crushes to zero, the whole horizontal field collapses toward a point left of center, and out of that compression MINUTOS lands in the accent color on the 4.5s beat with a sharp scale settle and a mono readout snapping to 00:12. The compression is the single dominant motion idea; everything else serves it. The statement then sets in two lines — 'Producción de video / en minutos, no en semanas' — where 'minutos' is already accent-colored and 'semanas' gets a thin accent rule swept through it at 9.8s, retiring the old unit on screen rather than saying so. The last beat is a lockup, not a fade: the line snaps to its margin position, the hairline grid it was always sitting on flashes visible for a breath, an underline sweeps left-to-right beneath 'minutos', and the piece holds still and confident to the cut. The viewer is never asked to read a pitch — they watch a schedule get compressed, and the craft of the compression is the proof.",
+
   "content": {
+    "block": "mk-callout-highlight",
+
+    "also_install": [
+      {
+        "name": "telemetry-hud",
+        "type": "component",
+        "role": "Persistent mono technical-mark chrome for the whole 12s: hairline corner brackets draw on 0.12-0.9s, three IBM Plex Mono label:value readouts tick deterministically on cues. This is the 'engineered instrument' layer the style calls for, and its tick engine is already fixed-seed and seek-safe.",
+        "catalog_query": "timeline scrubber ticks timecode readout"
+      },
+      {
+        "name": "tracking-in",
+        "type": "component",
+        "role": "Supplies the `--hf-tracking-value` CSS-var mechanism that drives the letter-spacing of SEMANAS. Used FORWARD for the 0.3s entrance and then RUN IN REVERSE (0.28em -> -0.04em) as the dominant compression move.",
+        "catalog_query": "letter spacing compresses tracking collapses inward"
+      },
+      {
+        "name": "headline-slam",
+        "type": "component",
+        "role": "MINUTOS landing at 4.5s — scale-down-into-frame plus the deterministic three-frame landing shake. Take the shake recipe and the settle; discard its whip-up exit (this piece never exits, it cuts).",
+        "catalog_query": "impact word lands with scale punch and shake"
+      },
+      {
+        "name": "strikethrough-replace",
+        "type": "component",
+        "role": "The 9.8s retirement of SEMANAS. Use the strike half only (`i` plus `--hf-strike-progress`, origin left); the `strong` replacement half is unused — MINUTOS already stands two words earlier in the same line, so the replacement is spatial, not a swap.",
+        "catalog_query": "strikethrough line crosses out a word"
+      },
+      {
+        "name": "dynamic-grid",
+        "type": "component",
+        "role": "The 9.8s hairline column-grid flash. Exposes `--hf-grid-opacity` for a seek-safe 0 -> 0.12 -> 0 tween. Override `--hf-grid-size` to 142px so the grid that flashes IS the 12-column module the piece was laid out on.",
+        "catalog_query": "hairline layout grid columns flash on"
+      },
+      {
+        "name": "grain-overlay",
+        "type": "component",
+        "role": "Filmic ground, very low intensity (opacity 0.05). Full-duration, no timeline involvement.",
+        "catalog_query": "film grain and vignette overlay texture"
+      },
+      {
+        "name": "vignette",
+        "type": "component",
+        "role": "Filmic ground, low intensity (0.35). Full-duration, no timeline involvement.",
+        "catalog_query": "film grain and vignette overlay texture"
+      }
+    ],
+
+    "rejected_after_search": [
+      {
+        "name": "caption-editorial-emphasis",
+        "why": "It is a caption OVERLAY for footage — Playfair/Inter, a cue-driven `.caption-layer` inside a safe-zone. Forcing a 5-scene full-frame editorial narrative onto a caption-cue data model would import typography we replace wholesale. This is the catalog-map's explicit 'a motif none of the 17 caption-* cover' escape."
+      },
+      {
+        "name": "number-pop-in",
+        "why": "Redundant. telemetry-hud already ticks `T - 00:12` deterministically on a cue; a second number primitive for one readout is gold-plating."
+      }
+    ],
+
+    "catalog_gap_filed": {
+      "query": "measuring ruler with tick marks and scale labels",
+      "wanted": "a to-scale measuring rule / axis whose ticks and numeric labels can compress or expand along one dimension",
+      "tier": "words",
+      "status": "reported via `npx hyperframes feedback --search-miss` — the registry has no rule/ruler/axis primitive, so the measuring rule and its inward tick rush are the ONE hand-authored motif in this piece."
+    },
+
+    "blueprint": "kinetic-type-beats (sub-shape B, multi-beat statement build). The blueprint names 'letter-spacing collapse' as a legal per-beat move and its Problem-relay variant describes exactly this shot: 'a single word letter-tracking-tightens from wide spacing while scaling'. Scene seams are motivated hard handoffs, never shader transitions: transition_in = none on every scene.",
+
+    "customize": {
+      "mk-callout-highlight": {
+        "role": "Spine for scenes `statement` (7.2-9.8) and `lockup` (9.8-12.0): the two-line statement whose words resolve left-to-right from muted to paper under ONE scalar (`st.p`), driven from the root timeline.",
+        "CONFIG.text": "authored as TWO explicit left-aligned rows, not one wrapped box — line 1 `PRODUCCIÓN DE VIDEO`, line 2 `EN MINUTOS, NO EN SEMANAS`. Do NOT rely on maxWidth wrapping; at 112px League Gothic the natural wrap pulls `EN` onto line 1.",
+        "CONFIG.fontSize": 112,
+        "CONFIG.lineHeight": 1.04,
+        "CONFIG.x": 120,
+        "CONFIG.y": 470,
+        "CONFIG.align": "left",
+        "CONFIG.maxWidth": "n/a — replaced by two authored rows",
+        "CONFIG.sweep": { "start": 7.4, "end": 8.6 },
+        "CONFIG.animationIn": false,
+        "CONFIG.animationOut": false,
+        "FULL": "#F2EFE9",
+        "FAINT": "#6E6A63",
+        "--mk-font": "'League Gothic', 'Oswald', 'Arial Narrow', sans-serif",
+        "word_overrides": [
+          "`MINUTOS` (line 2, word index 1) is rendered TRANSPARENT inside the block — it reserves its exact layout slot but paints nothing. The real accent MINUTOS element from the previous scene FLIPs into that slot and sits on top. This is what makes the handoff a continuation instead of a cut.",
+          "`SEMANAS` (line 2, last word) is PINNED at #6E6A63 for the whole piece — excluded from the sweep's mix() and never resolving to paper. The sweep resolving everything except the last word is the hierarchy."
+        ],
+        "must_fix_block_defaults": [
+          "`var DUR = 8` -> 12, and `data-duration=\"8\"` -> 12 on `#mk-ch-root`, or the statement vanishes at 8s.",
+          "Delete `tl.set(root, { visibility: 'hidden' }, DUR - 0.02)` — the piece ends on a hard cut with the lockup fully painted, never on a hidden root.",
+          "`animationIn`/`animationOut` both false: entrances and the ending are owned by the root timeline, not the block."
+        ],
+        "entrance_ownership": "Root timeline sets each word's opacity binary at 7.32 (waterfall-entry law: never fade an arrival) with a 0.055s stagger and y 14 -> 0, power3.out; the block's scalar then does the colour resolve on top."
+      },
+
+      "telemetry-hud": {
+        "mount": "Mounted full-frame as a chrome LAYER (z between the ground and the type), with the `[data-slot=\"subject\"]` children REMOVED — the slot stays empty. Its own contract is 'the subject never moves and the HUD breathes zero', which is exactly right for chrome and exactly wrong for our type, so the type stays in the root. Mount at data-start=0 data-duration=12 so hud-local seconds equal root seconds and the cues land on the real beats.",
+        "readouts": "ESCALA - 1:1, T - 00:00, UNIDAD - SEM",
+        "readout_targets": ["ESCALA - 1:10080", "T - 00:12", "UNIDAD - MIN"],
+        "cues": "2.4, 4.62, 4.9",
+        "emphasize": 2,
+        "accent": "blue (remapped: set --accent: #FF4A1C in the host)",
+        "exit": "none",
+        "restyle": [
+          "Corner brackets -> 1px hairline, #6E6A63 at 40% alpha, 48px arms, inset 64px from the frame edge. Keep the ATTRIBUTE-driven stroke-dashoffset draw (0.12-0.9s) — it is the 0.3s hook's second voice.",
+          "Readout type -> IBM Plex Mono 13px, letter-spacing 0.12em, uppercase, #6E6A63; the emphasized one flashes to #FF4A1C.",
+          "Readouts sit top-left (ESCALA), top-right (T), bottom-right (UNIDAD) — never bottom-left, which the statement's left rail owns.",
+          "`1:10080` is literal: one week is 10080 minutes. The technical mark is true, not decorative."
+        ]
+      },
+
+      "tracking-in": {
+        "applied_to": "#semanas (the display word) only.",
+        "vars": { "tracking": "wide", "rise": "standard", "tone": "paper" },
+        "note": "The component's shipped recipe tweens `--hf-tracking-value` DOWN to 0.02em as a reveal. Here it is used twice: the 0.3s entrance settles it at 0.28em (open), and the compression then runs it to -0.04em (crushed). Two tweens, one owner, absolute values, both `fromTo` — seek-safe in both directions."
+      },
+
+      "strikethrough-replace": {
+        "vars": { "origin": "left", "thickness": "thin", "tint": "blue", "tone": "paper" },
+        "note": "tint `blue` rides `--accent`; set `--accent: #FF4A1C` on the host so the strike is the piece's one accent. Position the `i` rule over the SEMANAS run of line 2 (x 967 -> 1296, y ~632 — measure at build time). Drop the `strong` replacement element entirely."
+      },
+
+      "dynamic-grid": {
+        "vars": { "density": "fine", "weight": "hairline", "tone": "neutral" },
+        "overrides": {
+          "--hf-grid-size": "142px",
+          "--hf-grid-color": "rgba(242,239,233,0.5)",
+          "--hf-grid-opacity": "0 at rest; tweened by the root timeline at 9.8s only"
+        }
+      },
+
+      "grain-overlay": { "opacity": 0.05, "blend": "soft-light" },
+      "vignette": { "intensity": 0.35 }
+    },
+
+    "layout": {
+      "grid": "12 columns. Outer margin 120px each side -> 1680px content width. Gutter 24px, column width 118px, column i left rail = 120 + i * 142.",
+      "rails": {
+        "left_margin_x": 120,
+        "right_margin_x": 1800,
+        "col5_left_rail_x": 688,
+        "col5_center_x": 747,
+        "compression_focus_x": 747,
+        "compression_focus_pct": "38.9% width — the asymmetric point Part 1 named; it lands on the col-5 centerline so the collapse is on-grid, not eyeballed."
+      },
+      "measuring_rule": {
+        "y": 700,
+        "x_from": 120,
+        "x_to": 1800,
+        "stroke": "1px #6E6A63 at 55%",
+        "major_ticks": { "count": 4, "x": [120, 680, 1240, 1800], "length": 28, "labels": ["S1", "S2", "S3", "S4"] },
+        "minor_ticks": { "count": 9, "spacing": 140, "length": 12, "opacity": 0.5 },
+        "labels": "IBM Plex Mono 14px, 0.14em tracking, #6E6A63, 18px below the major ticks"
+      },
+      "display_line": {
+        "font": "League Gothic",
+        "size_px": 260,
+        "baseline_y": 600,
+        "semanas_x": 120,
+        "minutos_x": 688,
+        "semanas_tracking": "0.28em",
+        "minutos_tracking": "-0.04em"
+      },
+      "statement": {
+        "font": "League Gothic",
+        "size_px": 112,
+        "setting": "uppercase — the exact Spanish copy, set in caps. This is a typographic setting, not a copy change, and it is what lets MINUTOS FLIP from the 260px display word into the 112px line without a case break.",
+        "line1": { "text": "PRODUCCIÓN DE VIDEO", "x": 120, "baseline_y": 556 },
+        "line2": { "text": "EN MINUTOS, NO EN SEMANAS", "x": 120, "baseline_y": 672 },
+        "minutos_slot_x": 261,
+        "semanas_slot_x": 967,
+        "semanas_slot_w": 329,
+        "note": "All x/w figures are authored estimates for League Gothic at 112px. Measure the real runs with getBoundingClientRect at BUILD TIME — legal here because this is a single-clip composition whose every element exists in the DOM from t=0 at opacity 0. Gate measurement on document.fonts.ready."
+      },
+      "safe_zones": "Nothing below y=980 or above y=90 (telemetry readouts excepted, at 64px inset). The lockup's optical weight sits left of centre; the right third stays deliberately empty."
+    },
+
+    "fonts": {
+      "display": "League Gothic — Google Fonts `League+Gothic` (400). Fallback stack: 'League Gothic', 'Oswald', 'Arial Narrow', sans-serif.",
+      "mono": "IBM Plex Mono — Google Fonts `IBM+Plex+Mono:wght@400;500`. Fallback: 'IBM Plex Mono', ui-monospace, monospace.",
+      "note": "Both load from fonts.googleapis.com — no API key, no asset provider, nothing in assets/."
+    },
+
+    "determinism": {
+      "timeline": "ONE paused root GSAP timeline registered as window.__timelines['main']. telemetry-hud and mk-callout-highlight each register their own paused sub-composition timeline per the HF contract; no scene timeline is ever paused inside the root.",
+      "randomness": "None. The measuring rule's ticks are an authored constant array; telemetry-hud's value ticking already uses a fixed-seed LCG table built before its timeline registers. No Math.random, no Date.now.",
+      "forbidden": "No width/height tweens. The rule compression is scaleX on a transform proxy with transformOrigin at x=747, plus an INVERSE scaleX on each mono label so the type never distorts (the counter-scale technique from rule:anchored-layout-expand).",
+      "seek": "Every entrance is fromTo with an explicit from-state; no relative `+=` tweens; group staggers capped so each arrival reads as one beat (max 4 x 0.055 = 0.22s, well under the 0.5s cap)."
+    },
+
     "scenes": [
       {
         "id": "rule",
         "start": 0,
         "end": 2.4,
+        "transition_in": "none",
         "text": "SEMANAS",
-        "emphasis_words": [
-          "SEMANAS"
-        ],
+        "emphasis_words": ["SEMANAS"],
         "emotion": "measured, institutional, slightly heavy — the status quo",
         "motion": "Hook lands by 0.3s: hairline rule draws on left-to-right fast (bar_wipe, 0.35s, power4.out) while SEMANAS enters with slide_bottom + open tracking (0.28em) and mono tick labels S1·S2·S3·S4 stagger in beneath it. Then near-stillness — a slow hold_breath only — so the compression has something to break.",
-        "beats": [
-          0.3,
-          1.2
+        "beats": [0.3, 1.2],
+        "blocks_used": ["tracking-in", "telemetry-hud"],
+        "animation_rules": ["rule:svg-path-draw", "rule:waterfall-entry", "rule:sine-wave-loop"],
+        "beat_treatments": [
+          {
+            "t": 0.24,
+            "note": "anticipated 0.06s so it reads on the 0.3 beat",
+            "moves": [
+              "MEASURING RULE — svg-path-draw: getTotalLength() at setup, stroke-dashoffset = length -> 0 over 0.35s, power4.out, left to right. ATTRIBUTE-driven dashoffset (a CSS dashoffset tween leaves stale paint under reverse seeks).",
+              "SEMANAS — slide_bottom: fromTo({ y: 150, autoAlpha: 0 } -> { y: 0, autoAlpha: 1 }), 0.44s, power4.out, with --hf-tracking-value already parked at 0.28em."
+            ]
+          },
+          {
+            "t": 0.52,
+            "moves": [
+              "4 major ticks drop from the rule: scaleY 0 -> 1, transformOrigin top, stagger 0.05 left to right (0.20s total), 0.22s, power3.out."
+            ]
+          },
+          {
+            "t": 0.74,
+            "moves": [
+              "9 minor ticks: scaleY 0 -> 1 to opacity 0.5, stagger 0.018 (0.16s total), 0.16s, power2.out. Quieter and faster than the majors — hierarchy, not repetition."
+            ]
+          },
+          {
+            "t": 0.86,
+            "moves": [
+              "S1 S2 S3 S4 labels — waterfall-entry: binary opacity via tl.set (never fade an arrival) plus y 10 -> 0, stagger 0.055 (0.22s total), 0.20s, power3.out."
+            ]
+          },
+          {
+            "t": 1.2,
+            "note": "beat — the accent's first and only appearance in the first half",
+            "moves": [
+              "A single 14px accent stub marks the S1 position at x=120: scaleY 0 -> 1, transformOrigin top, 0.18s, power3.out. One frame of signal, then it holds. Nothing else in scenes 1-2 is accent-coloured."
+            ]
+          },
+          {
+            "t": 1.38,
+            "moves": [
+              "hold_breath — sine-wave-loop, ONE finite yoyo on the whole rule group: scale 1 -> 1.008 -> 1 over 0.92s, sine.inOut, repeat 1. Nothing else moves until 2.30. This stillness is the setup for the interrupt."
+            ]
+          }
         ]
       },
       {
         "id": "compress",
         "start": 2.4,
         "end": 4.5,
+        "transition_in": "none — continuous; the rule group never leaves, it deforms",
         "text": "SEMANAS",
         "emphasis_words": [],
         "emotion": "sudden mechanical compression — the pattern interrupt",
-        "motion": "The one thing that changes: the rule's ticks rush inward (stagger from the outside in, expo.in) and SEMANAS' letter-spacing crushes 0.28em → -0.04em while the whole group scales x toward a point at 38% width; slight motion-blur feel via a short x-shear and 6px blur that resolves; mono tick labels drop out one by one as they collide. Ends compressed to a single dense mark — no text exit, the collapse IS the exit.",
-        "beats": [
-          2.4,
-          4.4
+        "motion": "The one thing that changes: the rule's ticks rush inward (stagger from the outside in, expo.in) and SEMANAS' letter-spacing crushes 0.28em -> -0.04em while the whole group scales x toward a point at 38% width; slight motion-blur feel via a short x-shear and 6px blur that resolves; mono tick labels drop out one by one as they collide. Ends compressed to a single dense mark — no text exit, the collapse IS the exit.",
+        "beats": [2.4, 4.4],
+        "blocks_used": ["tracking-in", "telemetry-hud"],
+        "animation_rules": [
+          "rule:center-outward-expansion (RUN IN REVERSE — final positions collapse to the focus point under one shared driver)",
+          "rule:motion-blur-streak",
+          "rule:anchored-layout-expand (for the inverse counter-scale on the mono labels)",
+          "rule:kinetic-beat-slam"
+        ],
+        "beat_treatments": [
+          {
+            "t": 2.3,
+            "note": "windup — 0.10s of anticipation before the 2.4 beat",
+            "moves": [
+              "Rule group stretches OUTWARD 1.5% (scaleX 1 -> 1.015, transformOrigin 747px), 0.10s, power2.out. The recoil is what makes the crush read as mechanical rather than as a dissolve."
+            ]
+          },
+          {
+            "t": 2.4,
+            "note": "BEAT — the single pattern-interrupt. Phase A of the crush.",
+            "moves": [
+              "RULE GROUP — one driver proxy `p: 0 -> 0.75` over 1.15s, ease expo.in, at transformOrigin x=747 (col-5 centerline). Mapped: scaleX 1.015 -> 0.32. Slow start, brutal acceleration.",
+              "MONO LABELS — inverse scaleX (1 / groupScaleX) applied per label on the same driver so S1-S4 stay undistorted mono type while their POSITIONS rush inward. Transform-only, no width tween.",
+              "SEMANAS — --hf-tracking-value 0.28em -> 0.06em over the same 1.15s, expo.in, plus an x translate so its optical centre tracks toward 747.",
+              "telemetry cue 0: ESCALA - 1:1 ticks to 1:10080. The instrument reports the compression as it happens."
+            ]
+          },
+          {
+            "t": 3.15,
+            "moves": [
+              "S1 label drops out — opacity 1 -> 0 plus y +3, 0.10s, power1.in. Outermost dies first: it has the furthest to travel and the first collision."
+            ]
+          },
+          { "t": 3.25, "moves": ["S4 label drops out — same recipe."] },
+          {
+            "t": 3.4,
+            "note": "max velocity",
+            "moves": [
+              "MOTION BLUR — motion-blur-streak: SVG feGaussianBlur, stdDeviation on the X AXIS ONLY, proxy-tweened 0 -> 6 (peaking here) then -> 0 by 4.20. Horizontal-only blur is what sells lateral compression; an isotropic blur reads as a focus pull instead.",
+              "A 1.5deg x-shear rides the same proxy (skewX 0 -> 1.5 -> 0) for the shove."
+            ]
+          },
+          { "t": 3.6, "moves": ["S2 label drops out."] },
+          {
+            "t": 3.68,
+            "moves": [
+              "S3 label drops out. Minor ticks are culled as neighbours close within 8px — opacity -> 0, no separate timing, derived from the driver."
+            ]
+          },
+          {
+            "t": 3.55,
+            "note": "Phase B of the crush — the settle",
+            "moves": [
+              "Driver proxy `p: 0.75 -> 1` over 0.65s, ease power4.out. Mapped: scaleX 0.32 -> 0.082 (a 12.2:1 crush; 560px major-tick spacing becomes 46px).",
+              "SEMANAS — --hf-tracking-value 0.06em -> -0.04em on the same curve. The word ends as a single dense mark, unreadable BY DESIGN: it has already been read for 2.1s."
+            ]
+          },
+          {
+            "t": 4.2,
+            "note": "the held breath at the bottom of the collapse",
+            "moves": [
+              "0.30s of DEAD STILLNESS. Blur at 0, shear at 0, nothing tweens. No hold_breath here — the absence of the idle motion that ran in scene 1 is the tension."
+            ]
+          }
         ]
       },
       {
         "id": "minutos",
         "start": 4.5,
         "end": 7.2,
+        "transition_in": "none — reactive-displacement handoff; the entering word evicts the compressed mark",
         "text": "MINUTOS",
-        "emphasis_words": [
-          "MINUTOS"
-        ],
+        "emphasis_words": ["MINUTOS"],
         "emotion": "release, impact, certainty",
         "motion": "Out of the compressed mark MINUTOS scale_punches into the accent color on the 4.5s beat (back.out(2.2), 0.34s) with a 1px shake on landing; a mono readout 00:12 snaps in at the baseline right and a short accent tick-rule redraws at the new, tight spacing beneath it. glow on the accent at 4.9s, then hold — the word stays fully readable for ~2s.",
-        "beats": [
-          4.5,
-          4.9
+        "beats": [4.5, 4.9],
+        "blocks_used": ["headline-slam", "telemetry-hud"],
+        "animation_rules": [
+          "rule:spring-pop-entrance",
+          "rule:reactive-displacement",
+          "rule:svg-path-draw",
+          "rule:ambient-glow-bloom",
+          "rule:discrete-text-sequence",
+          "rule:sine-wave-loop"
+        ],
+        "beat_treatments": [
+          {
+            "t": 4.5,
+            "note": "BEAT — the payoff",
+            "moves": [
+              "MINUTOS — spring-pop-entrance: fromTo({ scale: 0.62, y: 18, autoAlpha: 0 } -> { scale: 1, y: 0, autoAlpha: 1 }), 0.34s, back.out(2.2). Colour #FF4A1C, 260px League Gothic, tracking -0.04em, left rail x=688 (col-5), baseline y=600 — it is BORN AT THE COLLAPSE POINT, which is what makes the compression causal rather than decorative.",
+              "COMPRESSED MARK — reactive-displacement: the victim's tween is driven by the same beat, duration 0.18s (53% of the intruder's 0.34s, inside the rule's 40-50% band): scaleY 1 -> 0.02 plus opacity -> 0, power3.in. MINUTOS does not replace SEMANAS, it displaces it."
+            ]
+          },
+          {
+            "t": 4.56,
+            "moves": [
+              "LANDING SHAKE — headline-slam's deterministic three-frame shake: x keyframes [-3, 3, 0], one frame each at 30fps (0.0333s), ease none. Three frames, not a wobble. Any longer reads as a bounce."
+            ]
+          },
+          {
+            "t": 4.58,
+            "moves": [
+              "NEW TICK RULE — svg-path-draw: 13 ticks across only 288px starting at x=688, y=700, drawn at the COMPRESSED spacing. Stroke #FF4A1C at 70%, dashoffset -> 0 over 0.28s, power3.out. The same instrument, re-scaled. This is the proof the collapse was to scale."
+            ]
+          },
+          {
+            "t": 4.62,
+            "moves": [
+              "telemetry cue 1: T - 00:00 ticks to 00:12 (discrete-text-sequence: text states at thresholds, resolved left to right through same-class stand-ins)."
+            ]
+          },
+          {
+            "t": 4.9,
+            "note": "BEAT — the accent's peak",
+            "moves": [
+              "GLOW — ambient-glow-bloom behind MINUTOS: radial #FF4A1C, peak opacity 0.28 (well under the rule's 0.45 ceiling), 120px blur, 0.22s in / 0.50s out. Plus textShadow 0 0 46px rgba(255,74,28,0.45), yoyo, repeat 1, 0.26s.",
+              "telemetry cue 2: UNIDAD - SEM ticks to MIN and flashes to accent (this is the hud's `emphasize` readout). The instrument changes units on the beat."
+            ]
+          },
+          {
+            "t": 5.2,
+            "moves": [
+              "HOLD — sine-wave-loop hold_breath: scale 1 -> 1.006 -> 1, sine.inOut, 2 finite repeats over 2.0s. MINUTOS is fully readable and effectively still for 2.3s — far past the ~0.3s legibility floor, and the only long rest in the piece."
+            ]
+          }
         ]
       },
       {
         "id": "statement",
         "start": 7.2,
         "end": 9.8,
+        "transition_in": "none — FLIP handoff; MINUTOS is the same DOM element in both scenes",
         "text": "Producción de video en minutos, no en semanas",
-        "emphasis_words": [
-          "minutos",
-          "semanas"
-        ],
+        "lines": ["PRODUCCIÓN DE VIDEO", "EN MINUTOS, NO EN SEMANAS"],
+        "emphasis_words": ["minutos", "semanas"],
         "emotion": "plain, confident, closing the argument",
         "motion": "MINUTOS demotes: scales down and slots into line 2 of the full statement (FLIP-style handoff, not a cut) while the rest of the line word_reveals around it (stagger 0.06s, power3.out) as two ragged-left lines on the margin grid. 'minutos' carries the accent from the previous scene; 'semanas' sets in muted #6E6A63.",
-        "beats": [
-          7.2,
-          8.6
+        "beats": [7.2, 8.6],
+        "blocks_used": ["mk-callout-highlight"],
+        "animation_rules": [
+          "rule:card-morph-anchor",
+          "rule:waterfall-entry",
+          "rule:gradient-text-sweep (the traveling word-to-word highlight form, as implemented by mk-callout-highlight's single scalar)"
+        ],
+        "beat_treatments": [
+          {
+            "t": 7.2,
+            "note": "BEAT — the demotion",
+            "moves": [
+              "MINUTOS FLIP — card-morph-anchor handoff on ONE element, transform-only: scale 1 -> 0.431 (112/260), x 688 -> 261 (delta -427), baseline y 600 -> 672 (delta +72), transformOrigin 'left bottom', 0.62s, power3.inOut. NEVER a font-size tween. Colour holds #FF4A1C throughout — the accent is carried, not re-applied.",
+              "MINUTOS' accent tick-rule and glow release on the same curve: opacity -> 0 over 0.30s, power2.in. The instrument has done its job; the argument takes over.",
+              "The mk-callout-highlight block reserves MINUTOS' slot as a TRANSPARENT word so the layout is measured correctly and the flown element lands in a real hole, not on top of a duplicate."
+            ]
+          },
+          {
+            "t": 7.32,
+            "moves": [
+              "REST OF THE STATEMENT — waterfall-entry: every other word's opacity set BINARY via tl.set (no fade on arrival) plus y 14 -> 0, per-word stagger 0.055 running line 1 then line 2, 0.24s each, power3.out. Total group stagger 0.44s — one arrival, one beat. Words land at #6E6A63 (faint), not at full paper."
+            ]
+          },
+          {
+            "t": 7.4,
+            "moves": [
+              "SWEEP — mk-callout-highlight's scalar `st.p` 0 -> 1, ease none, 1.20s, resolving each word #6E6A63 -> #F2EFE9 left to right across both lines. SEMANAS is excluded and stays muted. MINUTOS is excluded and stays accent. Everything else resolves — the sentence literally comes into focus around its two load-bearing words."
+            ]
+          },
+          {
+            "t": 8.6,
+            "note": "BEAT — the sweep lands",
+            "moves": [
+              "MINUTOS micro scale_pulse: 1 -> 1.012 -> 1, 0.18s, sine.inOut. The smallest emphasis in the piece — at this point the accent needs a nudge, not a punch.",
+              "9.0-9.8 is held: nothing tweens for 0.8s. The argument is on screen and the viewer is allowed to read it."
+            ]
+          }
         ]
       },
       {
         "id": "lockup",
         "start": 9.8,
         "end": 12,
+        "transition_in": "none",
         "text": "Producción de video en minutos, no en semanas",
-        "emphasis_words": [
-          "minutos"
-        ],
+        "lines": ["PRODUCCIÓN DE VIDEO", "EN MINUTOS, NO EN SEMANAS"],
+        "emphasis_words": ["minutos"],
         "emotion": "resolved, engineered, still",
         "motion": "A thin accent rule sweeps through 'semanas' at 9.8s (transformOrigin left, 0.3s, power2.out) retiring the word; the hairline column grid flashes in at 12% opacity for ~0.4s and settles out; underline_sweep runs beneath 'minutos' at 11.4s. Final ~0.6s is a held frame with only a hold_breath — hard cut at 12s, no fade.",
-        "beats": [
-          9.8,
-          11.4
+        "beats": [9.8, 11.4],
+        "blocks_used": ["strikethrough-replace", "dynamic-grid", "mk-callout-highlight"],
+        "animation_rules": ["rule:css-marker-patterns", "rule:svg-path-draw"],
+        "beat_treatments": [
+          {
+            "t": 9.8,
+            "note": "BEAT — retiring the old unit",
+            "moves": [
+              "STRIKE — strikethrough-replace's `i`: --hf-strike-progress 0 -> 1 (scaleX, transformOrigin left), 3px #FF4A1C, over the SEMANAS run of line 2 (x 967 -> 1296, y ~632 at x-height centre), 0.30s, power2.out. The `strong` replacement half is not used — this retires a word, it does not swap one.",
+              "GRID FLASH — dynamic-grid --hf-grid-opacity 0 -> 0.12 over 0.14s power2.out, hold 0.12s, -> 0 over 0.30s power2.in (ends 10.36). --hf-grid-size forced to 142px so the grid that appears is the exact 12-column module the type has been sitting on for 12 seconds. It flashes once and is never seen again — the frame admits its own construction for a quarter of a second."
+            ]
+          },
+          {
+            "t": 10.1,
+            "moves": [
+              "SEMANAS dims further: #6E6A63 -> rgba(110,106,99,0.55) over 0.30s, power2.out. Struck AND receding — the retirement finishes after the line lands."
+            ]
+          },
+          {
+            "t": 11.4,
+            "note": "BEAT — the last mark",
+            "moves": [
+              "UNDERLINE SWEEP beneath MINUTOS: 3px #FF4A1C, x 261 -> 590 (329px, the word's measured run), y = 690, fromTo scaleX 0 -> 1, transformOrigin 'left center', 0.36s, power3.out. Ends 11.76."
+            ]
+          },
+          {
+            "t": 11.76,
+            "note": "the cut",
+            "moves": [
+              "DEAD STILL for 0.24s. No hold_breath, no fade, no scale-out, no exit tween anywhere. The root timeline's last keyframe is at 11.76 and the render simply stops at 12.00.",
+              "Guards: telemetry-hud `exit: none`; mk-callout-highlight `animationOut: false` AND its `tl.set(root, {visibility:'hidden'})` deleted; grain and vignette are static layers with no timeline involvement. If anything is still moving at 11.9 the ending is wrong."
+            ]
+          }
         ]
       }
-    ],
-    "block": "hand-authored",
-    "block_rationale": "Catalog searched (npx hyperframes catalog --query \"kinetic type caption\" / \"compress\"). Closest candidates: variable-axis-type (width-axis morph = the tracking crush), kinetic-type-swap (held line with one rolling slot), kinetic-center-build. None carry the measuring-rule + tick-collapse system the shot depends on, and customizing one into it would cost more than authoring it. Decision: hand-author the rule/compression system with GSAP; borrow variable-axis-type technique for the tracking crush in the compress scene.",
-    "customize": {
-      "copy_final": "Producción de video en minutos, no en semanas",
-      "accent_word": "minutos",
-      "retired_word": "semanas",
-      "tick_labels": [
-        "S1",
-        "S2",
-        "S3",
-        "S4"
-      ],
-      "readout": "00:12",
-      "grid_columns": 12,
-      "hard_cut": true
-    }
+    ]
   }
 }
